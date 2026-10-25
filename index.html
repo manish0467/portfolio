@@ -440,7 +440,19 @@ Off-screen I re-architect my Arch/Hyprland desktop for fun — it's all in my
       return `<span class="ok">theme → ${light ? 'light' : 'dark'}</span> <span class="dim">— ghostty respects your eyes too</span>`;
     },
 
-    demo: () => { runDemo(); return `<span class="dim">rolling the demo — sit back 👻</span>`; },
+    demo: () => {
+      // flip themes transiently during the demo — never persist the demo's choice
+      const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
+      const savedToggle = COMMANDS.theme;
+      COMMANDS.theme = (args) => {
+        const html = document.documentElement;
+        const light = !html.classList.contains('light');
+        html.classList.toggle('light', light); // flip visually, skip localStorage
+        return `<span class="ok">theme → ${light ? 'light' : 'dark'}</span> <span class="dim">— ghostty respects your eyes too</span>`;
+      };
+      runDemo(seq).then(() => { COMMANDS.theme = savedToggle; });
+      return `<span class="dim">rolling the demo — sit back 👻</span>`;
+    },
 
     vim: () => `<span class="err">you are now trapped in vim.</span>\n<span class="dim">:q! is a lie. luckily this terminal forgives everything — just keep typing.</span>`,
     exit: () => `there is no exit. this is a portfolio, not a shell. 👻`,
@@ -479,8 +491,8 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
   }
 
   // scripted typewriter demo (powers the `demo` command)
-  async function runDemo() {
-    const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
+  async function runDemo(seq) {
+    seq = seq || ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
     for (const cmd of seq) {
       for (let i = 1; i <= cmd.length; i++) {
         input.value = cmd.slice(0, i);
