@@ -576,6 +576,13 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
     print(COMMANDS.neofetch());
     await sleep(300);
     print(`<span class="dim">type <span class="k">help</span> to explore, or click the tabs above 👻</span>`);
+    // #demo — shareable auto-playing tour (manish0467.github.io/portfolio/#demo)
+    if (location.hash === '#demo') {
+      await sleep(700);
+      printCmd('demo');
+      print(`<span class="dim">rolling the demo — sit back 👻</span>`);
+      await runDemo();
+    }
     input.focus();
   })();
 })();
