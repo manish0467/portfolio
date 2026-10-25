@@ -38,6 +38,29 @@
     --blue: #61afef;
     --orange: #d19a66;
     --selection: rgba(167, 139, 250, .25);
+    --window-bg: rgba(13,13,19,.92);
+    --window-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02) inset, 0 0 120px rgba(167,139,250,.06);
+    --titlebar-tint: rgba(255,255,255,.03);
+  }
+  html.light {
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface-2: #ededf3;
+    --border: #d9d9e3;
+    --text: #2b2b34;
+    --dim: #6d6d7a;
+    --accent: #7c5cf0;
+    --accent-2: #5b3ee8;
+    --green: #478f3b;
+    --cyan: #257c88;
+    --yellow: #93701c;
+    --red: #bd4441;
+    --blue: #3362c9;
+    --orange: #94531f;
+    --selection: rgba(124, 92, 240, .2);
+    --window-bg: rgba(255,255,255,.94);
+    --window-shadow: 0 30px 80px rgba(40,40,70,.18), 0 0 0 1px rgba(0,0,0,.03) inset, 0 0 120px rgba(124,92,240,.08);
+    --titlebar-tint: rgba(0,0,0,.02);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
@@ -52,15 +75,20 @@
     padding: clamp(8px, 3vw, 40px);
     overflow: hidden;
   }
+  html.light body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,92,240,.09), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(37,124,136,.05), transparent);
+  }
   ::selection { background: var(--selection); }
 
   .window {
     width: min(920px, 100%);
     height: min(660px, 100%);
-    background: rgba(13,13,19,.92);
+    background: var(--window-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02) inset, 0 0 120px rgba(167,139,250,.06);
+    box-shadow: var(--window-shadow);
     display: flex; flex-direction: column;
     overflow: hidden;
     backdrop-filter: blur(8px);
@@ -72,7 +100,7 @@
   .titlebar {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 14px;
-    background: linear-gradient(rgba(255,255,255,.03), transparent);
+    background: linear-gradient(var(--titlebar-tint), transparent);
     border-bottom: 1px solid var(--border);
     user-select: none; flex-shrink: 0;
   }
@@ -324,11 +352,13 @@
   const COMMANDS = {
     help: () => `
 <b>available commands</b>
-  <span class="k">neofetch</span>      who am I, system-style
+  <span class="k">neofetch</span>      who am I, system-style  (<span class="k">fastfetch</span> works too)
   <span class="k">whoami</span>        the short version
   <span class="k">projects</span>      what I've built  → <span class="k">project &lt;name&gt;</span> for links
   <span class="k">skills</span>        toolbox
   <span class="k">contact</span>       reach me
+  <span class="k">demo</span>          watch the terminal drive itself
+  <span class="k">theme</span>         toggle dark / light  → <span class="k">theme light</span> · <span class="k">theme dark</span>
   <span class="k">ghost</span>         👀
   <span class="k">clear</span>         wipe the terminal   <span class="dim">(Ctrl+L too)</span>
   <span class="k">history</span>       what you typed
@@ -390,6 +420,23 @@ Off-screen I re-architect my Arch/Hyprland desktop for fun — it's all in my
 
     ghost: () => { spawnGhost(); return `<span class="ok">👻 boo. did you see it?</span>`; },
 
+    theme: (args) => {
+      const html = document.documentElement;
+      const a = (args || '').toLowerCase();
+      const light = a === 'light' ? true : a === 'dark' ? false : !html.classList.contains('light');
+      html.classList.toggle('light', light);
+      try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
+      return `<span class="ok">theme → ${light ? 'light' : 'dark'}</span> <span class="dim">— ghostty respects your eyes too</span>`;
+    },
+
+    demo: () => { runDemo(); return `<span class="dim">rolling the demo — sit back 👻</span>`; },
+
+    vim: () => `<span class="err">you are now trapped in vim.</span>\n<span class="dim">:q! is a lie. luckily this terminal forgives everything — just keep typing.</span>`,
+    exit: () => `there is no exit. this is a portfolio, not a shell. 👻`,
+    rm: (args) => (args || '').includes('-rf')
+      ? `<span class="err">nice try.</span> the ghost backed everything up first.`
+      : `rm: refusing to remove without -rf <span class="dim">(which also won't work)</span>`,
+
     ls: () => `about.txt   projects/   skills/   contact/   <span class="k">ghost.key</span> 👻`,
     pwd: () => `/home/manish/portfolio`,
     date: () => new Date().toString(),
@@ -402,6 +449,7 @@ Off-screen I re-architect my Arch/Hyprland desktop for fun — it's all in my
     history: () => history_.map((h, i) => `  ${String(i+1).padStart(3)}  ${esc(h)}`).join('\n') || '  (empty)',
   };
   COMMANDS.socials = COMMANDS.contact;
+  COMMANDS.fastfetch = COMMANDS.neofetch;
   COMMANDS['project'] = (args) => {
     if (!args) return `usage: <span class="k">project &lt;name&gt;</span> — try ${PROJECTS.map(p=>p.name.toLowerCase()).slice(0,3).join(', ')}…`;
     const p = PROJECTS.find(p => p.name.toLowerCase().startsWith(args.toLowerCase()));
@@ -418,6 +466,33 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
     document.body.appendChild(g);
     setTimeout(() => g.remove(), 3400);
   }
+
+  // scripted typewriter demo (powers the `demo` command)
+  async function runDemo() {
+    const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme'];
+    for (const cmd of seq) {
+      for (let i = 1; i <= cmd.length; i++) {
+        input.value = cmd.slice(0, i);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(45 + Math.random() * 65);
+      }
+      await sleep(380);
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await sleep(cmd === 'projects' ? 1400 : 800);
+    }
+  }
+
+  // konami code → ghost swarm
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let kIdx = 0;
+  document.addEventListener('keydown', e => {
+    kIdx = (e.key === KONAMI[kIdx]) ? kIdx + 1 : (e.key === KONAMI[0] ? 1 : 0);
+    if (kIdx === KONAMI.length) {
+      kIdx = 0;
+      for (let i = 0; i < 6; i++) setTimeout(spawnGhost, i * 260);
+      print(`<span class="ok">↑↑↓↓←→←→BA — ghost swarm deployed 👻👻👻</span>`);
+    }
+  });
 
   const history_ = [];
   let hIdx = -1;
@@ -485,6 +560,7 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
 
   // boot sequence
   (async () => {
+    try { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
     print(`<span class="dim">ghost portfolio 1.0.0 — an interactive terminal. everything here is real data.</span>`);
     await sleep(350);
     printCmd('neofetch'); await sleep(280);
