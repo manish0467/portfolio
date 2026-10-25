@@ -111,7 +111,8 @@
     flex: 1; text-align: center; font-size: 12.5px; color: var(--dim);
     display: flex; align-items: center; justify-content: center; gap: 7px;
   }
-  .title svg { opacity: .85; }
+  .title svg { opacity: .85; cursor: pointer; }
+  .title svg:hover { opacity: 1; }
   .titlebar-spacer { width: 44px; }
 
   /* tabs */
@@ -557,6 +558,10 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
     t.classList.add('active');
     run(t.dataset.cmd);
   }));
+
+  // the title-bar ghost runs the demo
+  const titleGhost = document.querySelector('.titlebar .title svg');
+  if (titleGhost) titleGhost.addEventListener('click', () => run('demo'));
 
   // boot sequence
   (async () => {
