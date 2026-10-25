@@ -157,12 +157,17 @@
   /* input line */
   .input-line {
     display: flex; align-items: center; padding: 4px 20px 14px; flex-shrink: 0;
+    cursor: text;
   }
   #prompt-span { white-space: nowrap; }
+  #mirror {
+    position: absolute; left: -9999px; top: 0; visibility: hidden;
+    white-space: pre; pointer-events: none;
+  }
   #input {
-    flex: 1; min-width: 0; background: none; border: none; outline: none;
+    flex: 0 1 auto; width: 2ch; min-width: 0; background: none; border: none; outline: none;
     color: var(--text); font: inherit; caret-color: transparent;
-    margin-left: 8px;
+    margin-left: 8px; padding: 0;
   }
   .cursor {
     display: inline-block; width: 8.5px; height: 17px; margin-left: 1px;
@@ -233,9 +238,8 @@
 
   <div class="term" id="term"></div>
 
-  <div class="input-line">
-    <span id="prompt-span"></span>
-    <input id="input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+  <div class="input-line" id="input-line">
+    <span id="prompt-span"></span><span id="mirror" aria-hidden="true"></span><input id="input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
     <span class="cursor" id="cursor"></span>
   </div>
 
@@ -437,6 +441,24 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
 
   // input handling: history + tab completion
   const COMPLETIONS = Object.keys(COMMANDS).filter(c => !c.includes(' ')).concat(['clear']);
+  const mirror = document.getElementById('mirror');
+  const inputLine = document.getElementById('input-line');
+
+  // Size the input to its text so the block cursor sits right after it.
+  const syncCursor = () => {
+    mirror.textContent = input.value;
+    const cs = getComputedStyle(inputLine);
+    const avail = inputLine.clientWidth
+      - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+      - document.getElementById('prompt-span').offsetWidth - 12;
+    input.style.width = Math.max(14, Math.min(mirror.offsetWidth + 14, avail)) + 'px';
+  };
+  input.addEventListener('input', syncCursor);
+  window.addEventListener('resize', syncCursor);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncCursor);
+  inputLine.addEventListener('click', () => input.focus());
+  syncCursor();
+
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') { const v = input.value; input.value=''; run(v); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); if (hIdx > 0) input.value = history_[--hIdx] || ''; }
@@ -446,9 +468,10 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
       const v = input.value.toLowerCase();
       const hit = COMPLETIONS.filter(c => c.startsWith(v) && v);
       if (hit.length === 1) input.value = hit[0] + ' ';
-      else if (hit.length > 1) print(hit.map(h=>`<span class="k">${h}</span>`).join('  '), 'out');
+      else if (hit.length > 0) print(hit.map(h=>`<span class="k">${h}</span>`).join('  '), 'out');
     }
     else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); term.innerHTML=''; }
+    syncCursor();
   });
   term.addEventListener('click', () => input.focus());
   document.addEventListener('click', e => { if (!e.target.closest('.tab')) input.focus(); });
