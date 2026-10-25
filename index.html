@@ -474,7 +474,7 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
 
   // scripted typewriter demo (powers the `demo` command)
   async function runDemo() {
-    const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme'];
+    const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
     for (const cmd of seq) {
       for (let i = 1; i <= cmd.length; i++) {
         input.value = cmd.slice(0, i);
