@@ -42,26 +42,6 @@
     --window-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02) inset, 0 0 120px rgba(167,139,250,.06);
     --titlebar-tint: rgba(255,255,255,.03);
   }
-  html.light {
-    --bg: #e9ebf0;
-    --surface: #eff1f5;
-    --surface-2: #e6e8ee;
-    --border: #d3d6dd;
-    --text: #212229;
-    --dim: #585a63;
-    --accent: #6a48e8;
-    --accent-2: #5433d6;
-    --green: #2f7228;
-    --cyan: #166670;
-    --yellow: #85630f;
-    --red: #ad3a37;
-    --blue: #2a58c2;
-    --orange: #84501a;
-    --selection: rgba(106, 72, 232, .18);
-    --window-bg: rgba(251, 251, 253, .97);
-    --window-shadow: 0 30px 80px rgba(40,40,70,.16), 0 0 0 1px rgba(0,0,0,.04) inset, 0 0 120px rgba(106,72,232,.07);
-    --titlebar-tint: rgba(0,0,0,.025);
-  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
@@ -74,11 +54,6 @@
     display: flex; align-items: center; justify-content: center;
     padding: clamp(8px, 3vw, 40px);
     overflow: hidden;
-  }
-  html.light body {
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,92,240,.09), transparent),
-      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(37,124,136,.05), transparent);
   }
   ::selection { background: var(--selection); }
 
@@ -369,7 +344,6 @@
   <span class="k">skills</span>        toolbox
   <span class="k">contact</span>       reach me
   <span class="k">demo</span>          watch the terminal drive itself
-  <span class="k">theme</span>         toggle dark / light  → <span class="k">theme light</span> · <span class="k">theme dark</span>
   <span class="k">ghost</span>         👀
   <span class="k">clear</span>         wipe the terminal   <span class="dim">(Ctrl+L too)</span>
   <span class="k">history</span>       what you typed
@@ -431,29 +405,6 @@ Off-screen I re-architect my Arch/Hyprland desktop for fun — it's all in my
 
     ghost: () => { spawnGhost(); return `<span class="ok">👻 boo. did you see it?</span>`; },
 
-    theme: (args) => {
-      const html = document.documentElement;
-      const a = (args || '').toLowerCase();
-      const light = a === 'light' ? true : a === 'dark' ? false : !html.classList.contains('light');
-      html.classList.toggle('light', light);
-      try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
-      return `<span class="ok">theme → ${light ? 'light' : 'dark'}</span> <span class="dim">— ghostty respects your eyes too</span>`;
-    },
-
-    demo: () => {
-      // flip themes transiently during the demo — never persist the demo's choice
-      const seq = ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
-      const savedToggle = COMMANDS.theme;
-      COMMANDS.theme = (args) => {
-        const html = document.documentElement;
-        const light = !html.classList.contains('light');
-        html.classList.toggle('light', light); // flip visually, skip localStorage
-        return `<span class="ok">theme → ${light ? 'light' : 'dark'}</span> <span class="dim">— ghostty respects your eyes too</span>`;
-      };
-      runDemo(seq).then(() => { COMMANDS.theme = savedToggle; });
-      return `<span class="dim">rolling the demo — sit back 👻</span>`;
-    },
-
     vim: () => `<span class="err">you are now trapped in vim.</span>\n<span class="dim">:q! is a lie. luckily this terminal forgives everything — just keep typing.</span>`,
     exit: () => `there is no exit. this is a portfolio, not a shell. 👻`,
     rm: (args) => (args || '').includes('-rf')
@@ -491,8 +442,8 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
   }
 
   // scripted typewriter demo (powers the `demo` command)
-  async function runDemo(seq) {
-    seq = seq || ['clear', 'whoami', 'projects', 'ghost', 'theme', 'theme'];
+  async function runDemo() {
+    const seq = ['clear', 'whoami', 'projects', 'ghost'];
     for (const cmd of seq) {
       for (let i = 1; i <= cmd.length; i++) {
         input.value = cmd.slice(0, i);
@@ -587,7 +538,6 @@ ${p.url ? `<div class="proj-meta">→ <a class="link" href="${p.url}" target="_b
 
   // boot sequence
   (async () => {
-    try { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); } catch (e) {}
     print(`<span class="dim">ghost portfolio 1.0.0 — an interactive terminal. everything here is real data.</span>`);
     await sleep(350);
     printCmd('neofetch'); await sleep(280);
